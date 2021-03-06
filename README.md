@@ -1,5 +1,4 @@
-# wyset
-The perfect set cardinality estimator
+# wyset: the ideal set cardinality estimator
 
 16 bytes register:
 
