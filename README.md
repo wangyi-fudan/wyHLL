@@ -1,2 +1,2 @@
-# wyhll
-The perfect HyperLogLog
+# wyset
+The perfect set cardinality estimator
