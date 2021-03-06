@@ -1,5 +1,15 @@
 # wyset: the ideal set cardinality estimator
 
+What we do is to obtain a 3X larger Bloom Filter by utilization wasted bits in a byte.
+
+high 5 bits   low 3 bits
+
+10110         010
+
+HyperLogLog   Bloom Filter
+
+--------------------------
+
 16 bytes register:
 
 |set_size|wyset_error%|Flajolet_error%|error_ratio|
