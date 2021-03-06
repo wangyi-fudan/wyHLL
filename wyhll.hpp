@@ -25,7 +25,7 @@ struct wyhll{
 			for(uint64_t	i=0;	i<wyhll_size;	i++)	zeros+=!s[i];
 			if(zeros)	sum=log((double)zeros/wyhll_size)/log(1-1.0/wyhll_size);
 		} 
-		return est;
+		return	sum;
     }
     void clear(void){	memset(s,0,wyhll_size);	}
     void merge(const wyhll&	h){	for (uint64_t	i=0;	i<wyhll_size;	i++)	s[i]=max(s[i],h.s[i]);	}
