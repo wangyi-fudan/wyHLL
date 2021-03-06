@@ -40,7 +40,7 @@ static	inline	double	wyset_bf_estimator(uint8_t	*data,	uint64_t	bits){
 	uint8_t	pc[8]={0,1,1,2,1,2,2,3};	//	3 bit popcount table
 	uint64_t	m=0,	n=3ull<<bits;
 	for(uint64_t	i=0;	i<(1ull<<bits);	i++)	m+=pc[data[i]&7u];
-	return	log((double)(n-m)/n)/log(1-1.0/n);
+	return	m==n?-1:log((double)(n-m)/n)/log(1-1.0/n);
 }
 
 //	HLL estimaator
@@ -60,6 +60,10 @@ static	inline	double	wyset_hll_estimator(uint8_t	*data,	uint64_t	bits){
 //	the combined main estimator
 static	inline	double	wyset_estimator(uint8_t	*data,	uint64_t	bits){
 	double	e=wyset_hll_estimator(data,bits);
-	return	(e<(5ull<<bits))?wyset_bf_estimator(data,bits):e;	//	for small set, we return Bloom Filter estimator
+	if(e<(6ull<<bits)){//	for small set, we return Bloom Filter estimator
+		double	e1=wyset_bf_estimator(data,bits);	
+		if(e1>-0.5)	return	e1;
+	}
+	return	e;
 }
 #endif
