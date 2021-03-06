@@ -1,7 +1,5 @@
 #include	"wyhash.h"
-#include	<cmath>
-#include	<iostream>
-using	namespace	std;
+#include	<math.h>
 #define	wyhll_size	(1ull<<bits)
 template<uint64_t	bits>
 struct wyhll{
@@ -11,7 +9,8 @@ struct wyhll{
 		uint8_t	r=(lz<(64-bits)?lz:64-bits)+1;
 		if(r>s[i])	s[i]=r;
 	}
-    double estimate(void){
+	//Otmar Ertl, New Cardinality Estimation Methods for HyperLogLog Sketches
+	double estimate(void){
 		double x=0,	l,	dl=0,	dll=0;
 		for(uint64_t	i=0;	i<wyhll_size;	i++)	x+=1.0/(1ull<<s[i]);
 		l=x;	x/=wyhll_size;
@@ -29,9 +28,9 @@ struct wyhll{
 		} 
 		return	l;
 	}
-    void clear(void){	memset(s,0,wyhll_size);	}
-    void merge(const wyhll&	h){	for (uint64_t	i=0;	i<wyhll_size;	i++)	s[i]=max(s[i],h.s[i]);	}
-//https://github.com/hideo55/cpp-HyperLogLog
+	void clear(void){	memset(s,0,wyhll_size);	}
+	void merge(const wyhll&	h){	for (uint64_t	i=0;	i<wyhll_size;	i++)	s[i]=max(s[i],h.s[i]);	}
+	//https://github.com/hideo55/cpp-HyperLogLog
 	double old_estimate(void){
 		double sum=0,	alpha,	est;
 		for(uint64_t	i=0;	i<wyhll_size;	i++)	sum+=1.0/(1ull<<s[i]);
@@ -48,5 +47,5 @@ struct wyhll{
 			if(zeros)	est=wyhll_size*log((double)(wyhll_size)/zeros);
 		} 
 		return est;
-    }
+	}
 };
