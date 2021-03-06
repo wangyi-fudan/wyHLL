@@ -1,4 +1,3 @@
-#include	"wyhll.hpp"
 #include	"wyset.h"
 #include	<algorithm>
 #include	<iostream>
@@ -6,22 +5,25 @@
 #include	<vector>
 using	namespace	std;
 const	size_t	N=0x10000;
-const	size_t	bits=4;
+const	size_t	bits=10;
 
 int	main(void){
 	uint64_t	seed=0,	r;
-	uint8_t	*s;	wyset_alloc(&s,bits);	wyhll<bits>	t;
-	double	rmse0=0,	rmse1=0;
-	for(size_t	it=0;	it<N;	it++){
-		uint64_t	n=pow(2,wy2u01(wyrand(&seed))*16);
-		wyset_clear(s,bits);	t.clear();
-		for(size_t	i=0;	i<n;	i++){	r=wyrand(&seed);	wyset_add(s,bits,&r,8);	t.add(&r,8);	}
-		double	x=wyset_estimator(s,bits);
-		double	y=t.estimate();
-		double	z=n;
-		x=log(x),	y=log(y);	z=log(z);
-		rmse0+=(x-z)*(x-z);	rmse1+=(y-z)*(y-z);
+	uint8_t	*s;	wyset_alloc(&s,bits);
+	cout<<"|set_size|wyset_error%|Flajolet_error%|error_ratio|\n";
+	cout<<"|----|----|----|----|\n";
+	for(uint64_t	n=1;	n<0x10000;	n+=(n/2)+1){
+		double	rmse0=0,	rmse1=0;
+		for(size_t	it=0;	it<N;	it++){
+			wyset_clear(s,bits);
+			for(size_t	i=0;	i<n;	i++){	r=wyrand(&seed);	wyset_add(s,bits,&r,8);	}
+			double	x=wyset_estimator(s,bits);
+			double	y=wyset_baseline_estimator(s,bits);
+			double	z=n;
+			x=log(x),	y=log(y);	z=log(z);
+			rmse0+=(x-z)*(x-z);	rmse1+=(y-z)*(y-z);
+		}
+		cout<<'|'<<n<<'|'<<100*sqrt(rmse0/N)<<'|'<<100*sqrt(rmse1/N)<<'|'<<sqrt(rmse0/rmse1)<<"|\n";
 	}
-	cerr<<sqrt(rmse0/N)<<'\t'<<sqrt(rmse1/N)<<'\t'<<rmse0/rmse1<<'\n';
 	return	0;
 }
