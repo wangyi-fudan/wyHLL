@@ -11,7 +11,7 @@ struct wyhll{
 	}
 	//Otmar Ertl, New Cardinality Estimation Methods for HyperLogLog Sketches
 	double estimate(void){
-		double x=0,	l,	dl=0,	dll=0;
+		double x=0,	l,	dl=0,	dll=0;	uint64_t	zeros=0;
 		for(uint64_t	i=0;	i<wyhll_size;	i++)	x+=1.0/(1ull<<s[i]);
 		l=x;	x/=wyhll_size;
 		l=0.7213/(1+1.079/wyhll_size)*wyhll_size*wyhll_size/l;
@@ -19,14 +19,9 @@ struct wyhll{
 			double	z=l/wyhll_size/(1ull<<s[i]),	ez=exp(z);
 			dl+=z/(ez-1);
 			dll+=z/(ez-1)/l-z*z/l/(ez-1)/(ez-1)*ez;
-		}
+		}else	zeros++;
 		dl-=l*x;	dll-=x;	if(fabs(dl)>1e-8)	l-=dl/dll;
-		if(l<log1p(bits)*wyhll_size){
-			uint64_t	zeros=0;
-			for(uint64_t	i=0;	i<wyhll_size;	i++)	zeros+=!s[i];
-			if(zeros)	l=log((double)zeros/wyhll_size)/log(1-1.0/wyhll_size);
-		} 
-		return	l;
+		return	zeros&&l<log1p(bits)*wyhll_size?log((double)zeros/wyhll_size)/log(1-1.0/wyhll_size):l;
 	}
 	void clear(void){	memset(s,0,wyhll_size);	}
 	void merge(const wyhll&	h){	for (uint64_t	i=0;	i<wyhll_size;	i++)	s[i]=max(s[i],h.s[i]);	}
