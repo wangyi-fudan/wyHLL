@@ -3,8 +3,6 @@
 #define	wyset_version_0
 #include	"wyhash.h"
 #include	<math.h>
-#include	<iostream>
-using	namespace	std;
 struct	wyset{	uint8_t	*data,	bits,	layer;	};
 static	inline	void	wyset_alloc(wyset	*s,	uint8_t	bits,	uint8_t	layer){	s->bits=bits;	s->layer=layer;	s->data=(uint8_t*)calloc(((uint64_t)s->layer)<<s->bits,1);	}
 static	inline	void	wyset_free(wyset	*s){	free(s->data);	}
