@@ -33,12 +33,14 @@ static	inline	double	wyset_solve(wyset	*s,	uint64_t	*m){
 }
 
 static	inline	double	wyset_estimator(wyset	*s){
-	uint64_t	m[64]={};	bool	empty=true;
+	uint64_t	m[64]={};	bool	empty=true,	full=true;;
 	for(uint64_t	l=0;	l<s->layer;	l++){
 		uint64_t	sum=0;	uint8_t	*p=s->data+(l<<s->bits);
 		for (uint64_t	i=0;	i<(1ull<<s->bits);	i+=8)	sum+=__builtin_popcountll(*(uint64_t*)(p+i));
-		m[l]=sum;	if(m[l]!=(8ull<<s->bits))	empty=false;
+		m[l]=sum;	
+		if(m[l]!=(8ull<<s->bits))	full=false;
+		if(m[l])	empty=false;
 	}
-	return	empty?0:wyset_solve(s,	m);
+	return	empty?0:(full?-1.0:wyset_solve(s,	m));
 }
 #endif
