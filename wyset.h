@@ -17,7 +17,7 @@ static	inline	void	wyset_add(wyset	*s,	void	*item,	uint64_t	item_size){
 }
 static	inline	double	wyset_solve(wyset	*s,	uint64_t	*m){
 	double	n=8ull<<s->bits;
-	double	p[64]={},	N=(s->bits+s->layer+2)*M_LN2;
+	double	p[64]={},	N=(s->bits+s->layer+8)*M_LN2;
 	for(uint8_t	l=0;	l<s->layer;	l++)	p[l]=l==s->layer-1?1.0/n/(1ull<<l):1.0/n/(1ull<<l)/2;
 	for(size_t	it=0;	it<100;	it++){	
 		double	dn=0,	dnn=0,	en=exp(N);
