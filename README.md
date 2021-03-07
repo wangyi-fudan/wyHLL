@@ -1,4 +1,4 @@
-# DeepBloom: the ideal set cardinality estimator
+# wyset: The Ideal Probabilistic Set
 
 1024 bytes register, 8 layers
 
