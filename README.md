@@ -1,4 +1,4 @@
-# wyset: The Ideal Probabilistic Set
+# wyset: The Ideal Probabilistic Set Cardinality Estimator
 
 16kb bytes register, 4 layers:
 
