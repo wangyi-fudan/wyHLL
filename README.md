@@ -2,7 +2,7 @@
 
 1024 bytes register, 8 layers
 
-|set_size|wyset_error%|Flajolet_error%|error_ratio|
+|set_size|wyset_error%|HyperLogLog_error%|error_ratio|
 |----|----|----|----|
 |1|0.017664|0.048848|0.361612|
 |2|1.43274|2.24964|0.636874|
