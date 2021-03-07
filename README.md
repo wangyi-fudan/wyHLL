@@ -31,6 +31,7 @@
 |40963|0.244|2.464|0.099|
 |61445|0.252|0.747|0.338|
 
+
 1024 bytes register, 8 layers
 
 |set_size|wyset_error%|HyperLogLog_error%|error_ratio|
@@ -61,6 +62,7 @@
 |27308|1.948|3.197|0.609|
 |40963|1.972|3.211|0.614|
 |61445|2.017|3.209|0.629|
+
 
 128 bytes register, 16 layers
 
