@@ -1,7 +1,15 @@
-//	This is free and unencumbered software released into the public domain under The Unlicense (http://unlicense.org/)
-//	main repo: https://github.com/wangyi-fudan/wycard
-//	author: 王一 Wang Yi <godspeed_china@yeah.net>
-//	This cardinality estimation is based on a Bloom filter that upscales automaticly
+/*	This is free and unencumbered software released into the public domain under The Unlicense (http://unlicense.org/)
+	main repo: https://github.com/wangyi-fudan/wycard
+	author: 王一 Wang Yi <godspeed_china@yeah.net>
+	This cardinality estimation is based on a Bloom filter that upscales automaticly
+	
+	simple example:
+	wycard s;
+	wycard_alloc(&s,12<<10);
+	wycard_add(&s, item, item_len);
+	double card=wycard_cardinality(&s);
+	wycard_free(&s);
+*/
 #ifndef	wycard_version_0
 #define	wycard_version_0
 #include	"wyhash.h"
