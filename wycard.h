@@ -2,8 +2,8 @@
 	main repo: https://github.com/wangyi-fudan/wycard
 	author: 王一 Wang Yi <godspeed_china@yeah.net>
 	This cardinality estimation is based on multilayer Bloom filter
-	With <=12 layers, wycard is more accurate than Redis HyperLogLog.
-	wycard is the choice when number of items < 2048*bytes.
+	The more layers the more capacity. The less layers the more accuracy.
+	With <=12 layers, wycard is more accurate than Redis HyperLogLog, which means the number of items < 3072*bytes.
 
 	simple example:
 	wycard s;	//	define the structure
