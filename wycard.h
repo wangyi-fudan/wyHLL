@@ -7,7 +7,7 @@
 
 	simple example:
 	wycard s;	//	define the structure
-	wycard_alloc(&s,11,6);	//	allocate 6 layers, each layer is 2^11 bytes
+	wycard_alloc(&s,10,12);	//	allocate 12 layers, each layer is 2^10 bytes
 	wycard_add(&s, item, item_len);	//	insert item
 	double card=wycard_cardinality(&s);	//	estimate the cardinality
 	wycard_free(&s);	//	free the data
