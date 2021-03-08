@@ -66,4 +66,17 @@ static	inline	double	wycard_cardinality(wycard	*s){
 	}
 	return	empty?0:(full?-1.0:wycard_solve(s,	m));
 }
+
+static	inline	double	wycard_union_cardinality(wycard	*a,	wycard	*b){
+	if(a->bits!=b->bits||a->layers!=b->layers)	return	-0.5;
+	uint64_t	m[64]={};	bool	empty=true,	full=true;
+	for(uint64_t	l=0;	l<a->layers;	l++){
+		uint64_t	sum=0;	uint8_t	*p=a->data+(l<<a->bits),	*q=b->data+(l<<b->bits);
+		for (uint64_t	i=0;	i<(1ull<<a->bits);	i+=8)	sum+=__builtin_popcountll(*(uint64_t*)(p+i)|*(uint64_t*)(q+i));
+		m[l]=sum;	
+		if(m[l]!=(8ull<<a->bits))	full=false;
+		if(m[l])	empty=false;
+	}
+	return	empty?0:(full?-1.0:wycard_solve(a,	m));
+}
 #endif
