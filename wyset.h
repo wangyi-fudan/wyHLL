@@ -11,13 +11,13 @@ static	inline	void	wyset_alloc(wyset	*s,	uint32_t	size){	s->size=size>>3;	s->dat
 static	inline	void	wyset_free(wyset	*s){	free(s->data);	}
 static	inline	uint32_t	wyset_ones(wyset	*s){	uint32_t	m=0;	for(uint32_t	i=0;	i<s->size;	i++)	m+=__builtin_popcountll(s->data[i]);	return	m;	}
 static	inline	void	wyset_upscale(wyset	*s,	uint32_t	level){
-	double	p=1-(1-pow((double)((s->size<<6)-s->ones)/(s->size<<6),	1.0/(1ull<<(level-s->level))))*(s->size<<6)/s->ones;
-	uint64_t	rng=wyhash(s->data,s->size<<3,0,_wyp);
-	s->ones=0;	s->level=level;
-	for(uint32_t	i=0;	i<(s->size<<6);	i++)	if(s->data[i>>6]&(1ull<<(i&63))){
-		if(wy2u01(wyrand(&rng))<p)	s->data[i>>6]&=~(1ull<<(i&63));
-		else	s->ones++;
+	unsigned	m=(1-pow((double)((s->size<<6)-s->ones)/(s->size<<6),	1.0/(1ull<<(level-s->level))))*(s->size<<6);
+	uint64_t	rng=wyhash(s->data,s->size<<3,s->level,_wyp);
+	while(s->ones>m){
+		uint32_t	b=wy2u0k(wyrand(&rng),(s->size<<6));
+		if(s->data[b>>6]&(1ull<<(b&63))){	s->data[b>>6]&=~(1ull<<(b&63));	s->ones--;	}
 	}
+	s->level=level;
 }
 static	inline	void	wyset_add(wyset	*s,	void	*item,	uint64_t	item_size){
 	uint64_t	h=wyhash(item,item_size,0,_wyp);
