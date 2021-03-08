@@ -17,14 +17,19 @@
 #include	"wyhash.h"
 #include	<math.h>
 struct	wycard{	uint8_t	*data,	bits,	layers;	};
+
 static	inline	void	wycard_alloc(wycard	*s,	uint8_t	bits,	uint8_t	layers){	
 	s->bits=bits;	
 	s->layers=layers;	
 	s->data=(uint8_t*)calloc(((uint64_t)layers)<<bits,1);	
 }
-static	inline	void	wycard_free(wycard	*s){	free(s->data);	s->data=NULL;	s->bits=s->layers=0;	}
+
+static	inline	void	wycard_free(wycard	*s){	free(s->data);	}
+
 static	inline	uint64_t	wycard_capacity(wycard	*s){	return	1ull<<(s->bits+s->layers+3);	}
+
 static	inline	void	wycard_clear(wycard	*s){	memset(s->data,0,((uint64_t)s->layers)<<s->bits);	}
+
 static	inline	void	wycard_add(wycard	*s,	void	*item,	uint64_t	item_size){
 	uint64_t	h=wyhash(item,item_size,0,_wyp);
 	uint64_t	lz=__builtin_clzll(h);
@@ -32,10 +37,11 @@ static	inline	void	wycard_add(wycard	*s,	void	*item,	uint64_t	item_size){
 	h&=(8ull<<s->bits)-1;
 	s->data[(lz<<s->bits)+(h>>3)]|=1u<<(h&7);
 }
+
 static	inline	double	wycard_solve(wycard	*s,	uint64_t	*m){
 	double	n=8ull<<s->bits,	p[64]={},	N=(s->bits+s->layers+6)*M_LN2;
 	for(uint8_t	l=0;	l<s->layers;	l++)	p[l]=l==s->layers-1?1.0/n/(1ull<<l):0.5/n/(1ull<<l);
-	for(size_t	it=0;	it<100;	it++){	
+	for(size_t	it=0;	it<256;	it++){	
 		double	dn=0,	dnn=0,	en=expf(N);
 		for(uint8_t	l=0;	l<s->layers;	l++){	
 			double	ep=en*p[l],	enp=expf(-ep);
@@ -47,6 +53,7 @@ static	inline	double	wycard_solve(wycard	*s,	uint64_t	*m){
 	}
 	return	expf(N);
 }
+
 static	inline	double	wycard_cardinality(wycard	*s){
 	uint64_t	m[64]={};	bool	empty=true,	full=true;
 	for(uint64_t	l=0;	l<s->layers;	l++){
