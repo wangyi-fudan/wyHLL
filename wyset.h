@@ -3,42 +3,48 @@
 #define	wyset_version_0
 #include	"wyhash.h"
 #include	<math.h>
-struct	wyset{	uint8_t	*data,	bits,	layer;	};
-static	inline	void	wyset_alloc(wyset	*s,	uint8_t	bits,	uint8_t	layer){	s->bits=bits;	s->layer=layer;	s->data=(uint8_t*)calloc(((uint64_t)s->layer)<<s->bits,1);	}
+#include	<iostream>
+using	namespace	std;
+struct	wyset{	uint64_t	*data;	uint32_t	size,	level,	ones;	};
+static	inline	void	wyset_clear(wyset	*s){	memset(s->data,0,s->size<<3);	s->level=s->ones=0;	}
+static	inline	void	wyset_alloc(wyset	*s,	uint32_t	size){	s->size=size>>3;	s->data=(uint64_t*)malloc(s->size<<3);	wyset_clear(s);	}
 static	inline	void	wyset_free(wyset	*s){	free(s->data);	}
-static	inline	void	wyset_clear(wyset	*s){	memset(s->data,0,((uint64_t)s->layer)<<s->bits);	}
+static	inline	uint32_t	wyset_ones(wyset	*s){	uint32_t	m=0;	for(uint32_t	i=0;	i<s->size;	i++)	m+=__builtin_popcountll(s->data[i]);	return	m;	}
+static	inline	void	wyset_upscale(wyset	*s,	uint32_t	level){
+	double	p=1-(1-pow((double)((s->size<<6)-s->ones)/(s->size<<6),	1.0/(1ull<<(level-s->level))))*(s->size<<6)/s->ones;
+	uint64_t	rng=wyhash(s->data,s->size<<3,0,_wyp);
+	s->ones=0;	s->level=level;
+	for(uint32_t	i=0;	i<(s->size<<6);	i++)	if(s->data[i>>6]&(1ull<<(i&63))){
+		if(wy2u01(wyrand(&rng))<p)	s->data[i>>6]&=~(1ull<<(i&63));
+		else	s->ones++;
+	}
+}
 static	inline	void	wyset_add(wyset	*s,	void	*item,	uint64_t	item_size){
-	uint64_t	h=wyhash(item,item_size,0,_wyp),	lz=__builtin_clzll(h);
-	if(lz>=s->layer)	lz=s->layer-1;
-	h&=(8ull<<s->bits)-1;
-	s->data[(lz<<s->bits)+(h>>3)]|=1u<<(h&7);
+	uint64_t	h=wyhash(item,item_size,0,_wyp);
+	if((uint32_t)h>=(1ull<<(32-s->level)))	return;	//	randomly block insertions according to level
+	uint32_t	b=((h>>32)*(s->size<<6))>>32;
+	if(s->data[b>>6]&(1ull<<(b&63)))	return;	//	already set
+	s->ones++;	s->data[b>>6]|=1ull<<(b&63);
+	if(s->ones>=3*(s->size<<4))	wyset_upscale(s,	s->level+1);
 }
-static	inline	double	wyset_solve(wyset	*s,	uint64_t	*m){
-	double	n=8ull<<s->bits;
-	double	p[64]={},	N=(s->bits+s->layer+8)*M_LN2;
-	for(uint8_t	l=0;	l<s->layer;	l++)	p[l]=l==s->layer-1?1.0/n/(1ull<<l):1.0/n/(1ull<<l)/2;
-	for(size_t	it=0;	it<100;	it++){	
-		double	dn=0,	dnn=0,	en=exp(N);
-		for(uint8_t	l=0;	l<s->layer;	l++){	
-			double	enp=exp(-en*p[l]);
-			dn+=-en*p[l]*(n-m[l])+m[l]*en*p[l]*enp/(1-enp);
-			dnn+=-en*p[l]/(1-enp)/(1-enp)*(n*enp*enp+(m[l]-2*n+en*p[l]*m[l])*enp+n-m[l]);
-		}
-		N-=dn/dnn;
-		if(fabs(dn/dnn)<1e-6)	break;
-	}
-	return	exp(N);
-}
-
 static	inline	double	wyset_estimator(wyset	*s){
-	uint64_t	m[64]={};	bool	empty=true,	full=true;;
-	for(uint64_t	l=0;	l<s->layer;	l++){
-		uint64_t	sum=0;	uint8_t	*p=s->data+(l<<s->bits);
-		for (uint64_t	i=0;	i<(1ull<<s->bits);	i+=8)	sum+=__builtin_popcountll(*(uint64_t*)(p+i));
-		m[l]=sum;	
-		if(m[l]!=(8ull<<s->bits))	full=false;
-		if(m[l])	empty=false;
+	double	m=wyset_ones(s),	n=s->size<<6;
+	return	log((double)(n-m)/n)/log(1-1.0/n)*(1ull<<s->level);
+}
+static	inline	bool	wyset_copy(wyset	*des,	wyset	*src){
+	if(des->size!=src->size)	return	false;
+	des->level=src->level;	des->ones=src->ones;
+	memcpy(des->data,src->data,src->size<<3);
+	return	true;
+}
+static	inline	void	wyset_union(wyset	*a,	wyset	*b,	wyset	*out){
+	if(a->level>b->level){
+		wyset_copy(out,b);	wyset_upscale(out,a->level);
+		for(uint32_t	i=0;	i<out->size;	i++)	out->data[i]|=a->data[i];
 	}
-	return	empty?0:(full?-1.0:wyset_solve(s,	m));
+	else{
+		wyset_copy(out,a);	wyset_upscale(out,b->level);
+		for(uint32_t	i=0;	i<out->size;	i++)	out->data[i]|=b->data[i];
+	}
 }
 #endif
