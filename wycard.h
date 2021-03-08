@@ -1,8 +1,10 @@
 /*	This is free and unencumbered software released into the public domain under The Unlicense (http://unlicense.org/)
 	main repo: https://github.com/wangyi-fudan/wycard
 	author: 王一 Wang Yi <godspeed_china@yeah.net>
-	This cardinality estimation is based on a Bloom filter that upscales automaticly
-	
+	This cardinality estimation is based on multilayer Bloom filter
+	With <=8 layers, wycard is more accurate than Redis HyperLogLog.
+	wycard is the choice when number of items < 256*bytes.
+
 	simple example:
 	wycard s;	//	define the structure
 	wycard_alloc(&s,11,6);	//	allocate 6 layers, each layer is 2^11 bytes
