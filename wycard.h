@@ -48,11 +48,11 @@ static	inline	uint64_t	wycard_ones(wycard	*s){
 #elif defined(_MSC_VER) && defined(_M_X64)
 		m+=_mm_popcnt_u64(s->data[i]);
 #else
-        uint64_t	x=s->data[i];
-        x-=(x>>1)&0x5555555555555555;
-        x=(x&0x3333333333333333)+((x>>2)&0x3333333333333333);
-        x=(x+(x>>4))&0x0f0f0f0f0f0f0f0f;
-        x=(x*0x0101010101010101)>>56;
+		uint64_t	x=s->data[i];
+		x-=(x>>1)&0x5555555555555555;
+		x=(x&0x3333333333333333)+((x>>2)&0x3333333333333333);
+		x=(x+(x>>4))&0x0f0f0f0f0f0f0f0f;
+		x=(x*0x0101010101010101)>>56;
 		m+=x;
 #endif
 	}
