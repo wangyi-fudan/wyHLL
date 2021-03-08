@@ -1,3 +1,3 @@
 # wyset: The Ideal Probabilistic Set Cardinality Estimator
 
-[](comparison.png)
+![wyset vs redis HLL](comparison.png)
