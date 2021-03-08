@@ -5,10 +5,10 @@
 #include	<cmath>
 #include	<vector>
 using	namespace	std;
-const	size_t	N=0x10000;
+const	size_t	N=0x1000;
 int	main(void){
 	uint64_t	seed=0,	r;
-	wycard	s;	wycard_alloc(&s,11,6);
+	wycard	s;	wycard_alloc(&s,9,24);
 	uint64_t	ca=wycard_capacity(&s);
 	cout.precision(3);	cout.setf(ios::fixed);
 	cout<<"wycard capacity:\t"<<ca<<'\n';

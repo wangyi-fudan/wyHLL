@@ -1,8 +1,8 @@
 /*	This is free and unencumbered software released into the public domain under The Unlicense (http://unlicense.org/)
 	main repo: https://github.com/wangyi-fudan/wycard
 	author: 王一 Wang Yi <godspeed_china@yeah.net>
-	
-	This cardinality estimation is based on multilayer Bloom filter
+
+	This cardinality estimation is based on multilayer Bloom filter	
 	The more layers the more capacity. The less layers the more accuracy.
 	With <=12 layers, wycard is more accurate than Redis HyperLogLog, which means the cardinality < 3072*bytes.
 
@@ -43,16 +43,16 @@ static	inline	double	wycard_solve(wycard	*s,	uint64_t	*m){
 	double	n=8ull<<s->bits,	p[64]={},	N=(s->bits+s->layers+6)*M_LN2;
 	for(uint8_t	l=0;	l<s->layers;	l++)	p[l]=l==s->layers-1?1.0/n/(1ull<<l):0.5/n/(1ull<<l);
 	for(size_t	it=0;	it<256;	it++){	
-		double	dn=0,	dnn=0,	en=expf(N);
+		double	dn=0,	dnn=0,	en=exp(N);
 		for(uint8_t	l=0;	l<s->layers;	l++){	
-			double	ep=en*p[l],	enp=expf(-ep);
+			double	ep=en*p[l],	enp=exp(-ep);
 			dn+=-ep*(n-m[l])+m[l]*ep*enp/(1-enp);
 			dnn+=-ep/(1-enp)/(1-enp)*(n*enp*enp+(m[l]-2*n+ep*m[l])*enp+n-m[l]);
 		}
 		N-=dn/dnn;
 		if(fabs(dn/dnn)<1e-6)	break;
 	}
-	return	expf(N);
+	return	exp(N);
 }
 
 static	inline	double	wycard_cardinality(wycard	*s){
