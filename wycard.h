@@ -18,7 +18,7 @@
 #include	"wyhash.h"
 #include	<stdlib.h>
 #include	<math.h>
-typedef	struct	wycard_t{	uint8_t	*data,	bits,	layers,	hashes;	}	wycard;
+typedef	struct	wycard_t{	uint8_t	*data,	bits,	layers;	}	wycard;
 
 static	inline	void	wycard_alloc(wycard	*s,	uint8_t	bits,	uint8_t	layers){	
 	s->data=(uint8_t*)calloc(((uint64_t)layers)<<bits,1);	
