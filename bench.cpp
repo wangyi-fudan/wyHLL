@@ -5,19 +5,22 @@
 #include	<cmath>
 #include	<vector>
 using	namespace	std;
-const	size_t	N=0x1000;
+const	size_t	N=0x10000;
 int	main(void){
 	uint64_t	seed=0,	r;
-	wycard	s;	wycard_alloc(&s,3<<12);
+	wycard	s;	wycard_alloc(&s,11,6);
+	uint64_t	ca=wycard_capacity(&s);
 	cout.precision(3);	cout.setf(ios::fixed);
+	cout<<"wycard capacity:\t"<<ca<<'\n';
 	cout<<"|set_size|wycard_error%|redis_HLL_error%|error_ratio|\n";
 	cout<<"|----|----|----|----|\n";
-	for(uint64_t	n=1;	n<=100000000;	n+=(n/2)+1){
+	for(uint64_t	n=1;	n<ca;	n+=(n/2)+1){
 		double	rmse0=0,	rmse1=0;
 		for(size_t	it=0;	it<N;	it++){
 			wycard_clear(&s);
 			hllhdr *hdr = createHLLObject();
 			hdr = hllSparseToDense(hdr);
+			uint64_t	s0=seed;
 			for(size_t	i=0;	i<n;	i++){	
 				r=wyrand(&seed);	
 				wycard_add(&s,&r,8);	
