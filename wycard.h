@@ -18,30 +18,32 @@
 #include	"wyhash.h"
 #include	<stdlib.h>
 #include	<math.h>
-typedef	struct	wycard_t{	uint8_t	*data,	bits,	layers;	}	wycard;
+typedef	struct	wycard_t{	uint32_t	bytes;	uint8_t	*data,	layers;}	wycard;
 
-static	inline	void	wycard_alloc(wycard	*s,	uint8_t	bits,	uint8_t	layers){	
-	s->data=(uint8_t*)calloc(((uint64_t)layers)<<bits,1);	
-	s->bits=bits;	
-	s->layers=layers;	
+static	inline	uint64_t	wycard_alloc(wycard	*s,	uint32_t	bytes,	uint64_t	capacity){
+	for(s->layers=1;	s->layers<=32;	s->layers++){
+		s->bytes=bytes/s->layers;
+		if((uint64_t)s->bytes<<(s->layers+2)>=capacity)	break;
+	}
+	if(s->layers>32)	return	0;
+	s->data=(uint8_t*)calloc((uint64_t)s->layers*s->bytes,1);
+	if(s->data==NULL)	return	0;
+	return	(uint64_t)s->bytes<<(s->layers+2);
 }
 
 static	inline	void	wycard_free(wycard	*s){	free(s->data);	}
 
-static	inline	uint64_t	wycard_capacity(wycard	*s){	return	1ull<<(s->bits+s->layers+3);	}
-
-static	inline	void	wycard_clear(wycard	*s){	memset(s->data,0,((uint64_t)s->layers)<<s->bits);	}
+static	inline	void	wycard_clear(wycard	*s){	memset(s->data,0,(uint64_t)s->layers*s->bytes);	}
 
 static	inline	void	wycard_add(wycard	*s,	void	*item,	uint64_t	item_size){
 	uint64_t	h=wyhash(item,item_size,0,_wyp);
 	uint64_t	lz=__builtin_clzll(h);
 	if(lz>=s->layers)	lz=s->layers-1;
-	h&=(8ull<<s->bits)-1;
-	s->data[(lz<<s->bits)+(h>>3)]|=1u<<(h&7);
+	h=(((unsigned)h)*(8ull*s->bytes))>>32;
+	s->data[lz*s->bytes+(h>>3)]|=1u<<(h&7);
 }
-
-static	inline	double	wycard_solve(wycard	*s,	uint64_t	*m){
-	double	n=8ull<<s->bits,	p[64]={},	N=(s->bits+s->layers+6)*M_LN2;
+static	inline	uint64_t	wycard_solve(wycard	*s,	uint64_t	*m){
+	double	n=8ull*s->bytes,	p[64]={},	N=logf((uint64_t)s->bytes<<(s->layers+2));
 	for(uint8_t	l=0;	l<s->layers;	l++)	p[l]=l==s->layers-1?1.0/n/(1ull<<l):0.5/n/(1ull<<l);
 	for(size_t	it=0;	it<256;	it++){	
 		double	dn=0,	dnn=0,	en=exp(N);
@@ -53,31 +55,31 @@ static	inline	double	wycard_solve(wycard	*s,	uint64_t	*m){
 		N-=dn/dnn;
 		if(fabs(dn/dnn)<1e-6)	break;
 	}
-	return	exp(N);
+	return	exp(N)+0.5;
 }
 
-static	inline	double	wycard_cardinality(wycard	*s){
+static	inline	uint64_t	wycard_cardinality(wycard	*s){
 	uint64_t	m[64]={};	uint8_t	empty=1,	full=1;
 	for(uint64_t	l=0;	l<s->layers;	l++){
-		uint64_t	sum=0;	uint8_t	*p=s->data+(l<<s->bits);
-		for (uint64_t	i=0;	i<(1ull<<s->bits);	i+=8)	sum+=__builtin_popcountll(*(uint64_t*)(p+i));
+		uint64_t	sum=0;	uint8_t	*p=s->data+l*s->bytes;
+		for (uint64_t	i=0;	i<s->bytes;	i++)	sum+=__builtin_popcount(p[i]);
 		m[l]=sum;	
-		if(m[l]!=(8ull<<s->bits))	full=0;
+		if(m[l]!=8ull*s->bytes)	full=0;
 		if(m[l])	empty=0;
 	}
-	return	empty?0:(full?-1.0:wycard_solve(s,	m));
+	return	empty?0:(full?~0ull:wycard_solve(s,	m));
 }
 
-static	inline	double	wycard_union_cardinality(wycard	*a,	wycard	*b){
-	if(a->bits!=b->bits||a->layers!=b->layers)	return	-0.5;
+static	inline	uint64_t	wycard_union_cardinality(wycard	*a,	wycard	*b){
+	if(a->bytes!=b->bytes||a->layers!=b->layers)	return	~0ull;
 	uint64_t	m[64]={};	uint8_t	empty=1,	full=1;
 	for(uint64_t	l=0;	l<a->layers;	l++){
-		uint64_t	sum=0;	uint8_t	*p=a->data+(l<<a->bits),	*q=b->data+(l<<b->bits);
-		for (uint64_t	i=0;	i<(1ull<<a->bits);	i+=8)	sum+=__builtin_popcountll(*(uint64_t*)(p+i)|*(uint64_t*)(q+i));
+		uint64_t	sum=0;	uint8_t	*p=a->data+l*a->bytes,	*q=b->data+l*b->bytes;
+		for (uint64_t	i=0;	i<a->bytes;	i++)	sum+=__builtin_popcount(p[i]|q[i]);
 		m[l]=sum;	
-		if(m[l]!=(8ull<<a->bits))	full=0;
+		if(m[l]!=8ull*a->bytes)	full=0;
 		if(m[l])	empty=0;
 	}
-	return	empty?0:(full?-1.0:wycard_solve(a,	m));
+	return	empty?0:(full?~0ull:wycard_solve(a,	m));
 }
 #endif
