@@ -2,30 +2,35 @@
 #include	"wycard.h"
 #include	<algorithm>
 #include	<iostream>
+#include	<fstream>
 #include	<cmath>
 #include	<vector>
 using	namespace	std;
-const	size_t	N=0x100;
+const	size_t	N=0x1000;
 int	main(void){
 	uint64_t	seed=0,	r;
-	wycard	s;	
-	uint64_t	cap=wycard_alloc(&s,12<<10,0x100000);
-	cerr<<"capacity:\t"<<cap<<'\n';
+	wycard	s;
+	uint64_t	c=wycard_configure(&s,12<<10,10000000);
+	wycard_print_configure(s,stderr);
+	uint8_t	*data;
+	wycard_alloc(s,&data);
+	ofstream	fo("compare.xls");
+	fo.precision(3);	fo.setf(ios::fixed);
+	fo<<"size\twycard\tredis_HLL\n";
 	cout.precision(3);	cout.setf(ios::fixed);
-	cout<<"|set_size|wycard_RMSE%|redis_HLL_RMSE%|RMSE_ratio|\n";
-	cout<<"|----|----|----|----|\n";
-	for(uint64_t	n=1;	n<=cap;	n+=(n/2)+1){
-		double	rmse0=0,	rmse1=0;
+	cout<<"size\twycard\tredis_HLL\n";
+	for(uint64_t	n=1;	n<=c;	n+=(n/2)+1){
+		double	rmse0=0,	rmse1=0,	eb=0;
 		for(size_t	it=0;	it<N;	it++){
-			wycard_clear(&s);
+			wycard_clear(s,data);
 			hllhdr *hdr = createHLLObject();
 			hdr = hllSparseToDense(hdr);
 			for(size_t	i=0;	i<n;	i++){	
 				r=wyrand(&seed);	
-				wycard_add(&s,&r,8);	
+				wycard_add(s,data,&r,8);	
 				pfaddCommand(&hdr,(const unsigned char *)&r,8);
 			}
-			double	x=wycard_cardinality(&s);
+			double	x=wycard_cardinality(s,data);
 			uint64_t	ret;
 			pfcountCommand(hdr,&ret);
 			double	y=ret;
@@ -37,8 +42,10 @@ int	main(void){
 			deleteHLLObject(hdr);
 		}
 		rmse0/=N;	rmse1/=N;
-		cout<<'|'<<n<<'|'<<100*sqrt(rmse0)<<'|'<<100*sqrt(rmse1)<<'|'<<sqrt(rmse0/rmse1)<<"|\n";
+		fo<<n<<'\t'<<100*sqrt(rmse0)<<'\t'<<100*sqrt(rmse1)<<'\n';
+		cout<<n<<'\t'<<100*sqrt(rmse0)<<'\t'<<100*sqrt(rmse1)<<'\n';
 	}
-	wycard_free(&s);
+	fo.close();
+	free(data);
 	return	0;
 }
