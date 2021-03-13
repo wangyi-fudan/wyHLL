@@ -27,7 +27,7 @@ typedef  struct  wyhll_t{
 static  inline  void  wyhll_configure(wyhll  *s,  uint64_t  bytes,  uint64_t  capacity){  
   s->bins=(bytes-1)*8/3;
   double p=(double)s->bins/capacity;
-  if(p>0.25) p=0.25;
+  if(p>0.5) p=0.5;
   for(uint32_t	i=0;	i<6;	i++) s->p[i]=pow(p,(i+1)/6.0)*(1ull<<32);
 }
 
