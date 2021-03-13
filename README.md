@@ -1,3 +1,3 @@
-# wyHLL: WangYi's 3-bit HyperLogLog
+# wyHLL: WangYi's 3-bits HyperLogLog
 
 ![](wyhll.png)
