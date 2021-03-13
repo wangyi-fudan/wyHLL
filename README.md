@@ -1,3 +1,3 @@
-# wycard: The Ideal Approximate Set Cardinality Estimator
+# wyhll: WangYi's two-bit HyperLogLog
 
 ![](wycard.png)
