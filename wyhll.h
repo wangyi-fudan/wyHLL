@@ -19,16 +19,13 @@
 #include <stdio.h>
 #include <math.h>
 
-typedef  struct  wyhll_t{  
-  uint64_t bins;
-  uint32_t p[6]; 
-}wyhll;
+typedef  struct  wyhll_t{  uint64_t bins, p[6]; }wyhll;
 
 static  inline  void  wyhll_configure(wyhll  *s,  uint64_t  bytes,  uint64_t  capacity){  
   s->bins=(bytes-1)*8/3;
   double p=(double)s->bins/capacity;
   if(p>0.5) p=0.5;
-  for(uint32_t	i=0;	i<6;	i++) s->p[i]=pow(p,(i+1)/6.0)*(1ull<<32);
+  for(uint32_t	i=0;	i<6;	i++) s->p[i]=pow(p,(i+1)/6.0)*~0ull;
 }
 
 static  inline  uint64_t  wyhll_bytes(wyhll  s){  return s.bins*3/8+1; }
@@ -49,8 +46,8 @@ static  inline  void wyhll_set(uint8_t *data, uint64_t i, uint8_t v){
 
 static  inline  void  wyhll_add(wyhll  s,  uint8_t  *data,  void  *item,  uint64_t  item_size){
   uint64_t h=wyhash(item,item_size,0,_wyp);
-  uint64_t b=((h>>32)*s.bins)>>32;
-  uint8_t v; h=(uint32_t)h;
+  uint64_t b=wy2u0k(wyhash64(h,h),s.bins);
+  uint8_t v;
   if(h>=s.p[0]) v=1;
   else if(h>=s.p[1]) v=2;
   else if(h>=s.p[2]) v=3;
@@ -64,19 +61,19 @@ static  inline  void  wyhll_add(wyhll  s,  uint8_t  *data,  void  *item,  uint64
 static  inline  double  wyhll_loglike(wyhll  s,  uint32_t  *m,  double  N){
   double sum=0;
   sum-=m[0]*N/s.bins;
-  sum+=m[1]*log(exp(-N/s.bins*s.p[0]/(1ull<<32))-exp(-N/s.bins));
-  sum+=m[2]*log(exp(-N/s.bins*s.p[1]/(1ull<<32))-exp(-N/s.bins*s.p[0]/(1ull<<32)));
-  sum+=m[3]*log(exp(-N/s.bins*s.p[2]/(1ull<<32))-exp(-N/s.bins*s.p[1]/(1ull<<32)));
-  sum+=m[4]*log(exp(-N/s.bins*s.p[3]/(1ull<<32))-exp(-N/s.bins*s.p[2]/(1ull<<32)));
-  sum+=m[5]*log(exp(-N/s.bins*s.p[4]/(1ull<<32))-exp(-N/s.bins*s.p[3]/(1ull<<32)));
-  sum+=m[6]*log(exp(-N/s.bins*s.p[5]/(1ull<<32))-exp(-N/s.bins*s.p[4]/(1ull<<32)));
-  sum+=m[7]*log1p(-exp(-N/s.bins*s.p[5]/(1ull<<32)));
+  sum+=m[1]*log(exp(-N/s.bins*s.p[0]/~0ull)-exp(-N/s.bins));
+  sum+=m[2]*log(exp(-N/s.bins*s.p[1]/~0ull)-exp(-N/s.bins*s.p[0]/~0ull));
+  sum+=m[3]*log(exp(-N/s.bins*s.p[2]/~0ull)-exp(-N/s.bins*s.p[1]/~0ull));
+  sum+=m[4]*log(exp(-N/s.bins*s.p[3]/~0ull)-exp(-N/s.bins*s.p[2]/~0ull));
+  sum+=m[5]*log(exp(-N/s.bins*s.p[4]/~0ull)-exp(-N/s.bins*s.p[3]/~0ull));
+  sum+=m[6]*log(exp(-N/s.bins*s.p[5]/~0ull)-exp(-N/s.bins*s.p[4]/~0ull));
+  sum+=m[7]*log1p(-exp(-N/s.bins*s.p[5]/~0ull));
   return sum;
 }
 
 static  inline  uint64_t  wyhll_solve(wyhll  s, uint32_t  *m){
   if(m[0]==s.bins)  return  0;
-  double  r=(sqrt(5.0)+1)/2, a=0, b=log(s.bins<<32)-log(s.p[5]), c=b-(b-a)/r, d=a+(b-a)/r;
+  double  r=(sqrt(5.0)+1)/2, a=0, b=log(s.bins*((double)~0ull/s.p[5])), c=b-(b-a)/r, d=a+(b-a)/r;
   while(fabs(a-b)>1e-5){
     if(wyhll_loglike(s,m,exp(c))>wyhll_loglike(s,m,exp(d)))   b=d;  
     else  a=c;
